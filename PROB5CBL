@@ -1,0 +1,123 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PROB5.
+       AUTHOR. COLE DOMBROWSKI.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+           SELECT INVENTORY-INPUT-FILE ASSIGN TO UT-S-INV5IN
+
+           SELECT INVENTORY-OUTPUT-FILE ASSIGN TO UT-S-INV5OUT
+      *----------------------------------------------------------------
+       DATA DIVISION.
+       FILE SECTION.
+       FD  INVENTORY-INPUT-FILE RECORDING MODE IS F.
+       01                            PICTURE X(80).
+
+       FD  INVENTORY-OUTPUT-FILE RECORDING MODE IS F.
+       01  PRINT-A-SINGLE-LINE       PICTURE X(132).
+      *----------------------------------------------------------------
+       WORKING-STORAGE SECTION.
+       01  WORKING-VARIABLES.
+           05  EOF-INVENTORY-WS       PIC X(3)      VALUE 'NO'.
+           05  TOTAL-RECORDS-WS       PIC 999       VALUE ZERO.
+           05  TOTAL-DOLLARS-WS       PIC S9(9)V99  VALUE ZERO.
+
+       01 INVENTORY-INPUT-RECORD.
+           05 RECORD-TYPE-IN          PIC X.
+           05 BATCH-NUMBER-IN         PIC X(2).
+           05 SUPPLIER-NUMBER-IN      PIC X(5).
+           05 VOUCHER-NUMBER-IN       PIC X(6).
+           05 INVOICE-NUMBER-IN       PIC X(8).
+           05 ACCOUNT-NUMBER-IN       PIC 9(4).
+           05 STORE-NUMBER-IN         PIC X(3).
+           05 DATE-IN                 PIC X(8).
+           05 FILLER                  PIC X(12).
+           05 AMOUNT-IN               PIC S9(6)V99.
+           05 SUPPLIER-NAME-IN        PIC X(23).
+
+       01 DETAILED-OUTPUT-LINE-SETUP.
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 RECORD-TYPE-OUT         PIC X.
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 DATE-OUT                PIC XX/XX/XXXX.
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 AMOUNT-OUT              PIC $$$$,$$$,$$9.99BCR.
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 ACCOUNT-NUMBER-OUT      PIC 9(4).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 INVOICE-NUMBER-OUT      PIC X(8).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 BATCH-NUMBER-OUT        PIC X(2).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 VOUCHER-NUMBER-OUT      PIC X(6).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 STORE-NUMBER-OUT        PIC X(3).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 SUPPLIER-NUMBER-OUT     PIC X(5).
+           05 FILLER                  PIC X(2)      VALUE SPACE.
+           05 SUPPLIER-NAME-OUT       PIC X(23).
+      *----------------------------------------------------------------
+       01  TOTAL-RECORDS-LINE-SETUP.
+           05  FILLER                  PIC X.
+           05                          PIC X(5)     VALUE SPACE.
+           05                          PIC X(35)    VALUE
+           'NUMBER OF RECORDS PROCESSED IS:'.
+           05  TOTAL-RECORDS-OUT       PIC ZZZ9.
+      *----------------------------------------------------------------
+       01  TOTAL-DOLLARS-LINE-SETUP.
+           05  FILLER                  PIC X.
+           05                          PIC X(5)     VALUE SPACE.
+           05                          PIC X(35)    VALUE
+           'TOTAL NET DOLLAR AMOUNT IS:'.
+           05  TOTAL-DOLLARS-OUT       PIC $$$$,$$$,$$9.99BCR.
+      *----------------------------------------------------------------
+       PROCEDURE DIVISION.
+
+       100-MAINLINE.
+           PERFORM 200-OPEN
+           PERFORM 300-PROCESS UNTIL EOF-INVENTORY-WS = 'YES'
+           PERFORM 900-CLOSE
+           STOP RUN.
+
+       200-OPEN.
+           OPEN INPUT INVENTORY-INPUT-FILE OUTPUT INVENTORY-OUTPUT-FILE
+           PERFORM 250-READ-ONE-RECORD.
+
+       250-READ-ONE-RECORD.
+           READ INVENTORY-INPUT-FILE INTO INVENTORY-INPUT-RECORD
+               AT END MOVE 'YES' TO EOF-INVENTORY-WS
+           END-READ.
+
+       300-PROCESS.
+           MOVE RECORD-TYPE-IN             TO RECORD-TYPE-OUT
+           MOVE DATE-IN                    TO DATE-OUT
+           MOVE AMOUNT-IN                  TO AMOUNT-OUT
+           MOVE ACCOUNT-NUMBER-IN          TO ACCOUNT-NUMBER-OUT
+           MOVE INVOICE-NUMBER-IN          TO INVOICE-NUMBER-OUT
+           MOVE BATCH-NUMBER-IN            TO BATCH-NUMBER-OUT
+           MOVE VOUCHER-NUMBER-IN          TO VOUCHER-NUMBER-OUT
+           MOVE STORE-NUMBER-IN            TO STORE-NUMBER-OUT
+           MOVE SUPPLIER-NUMBER-IN         TO SUPPLIER-NUMBER-OUT
+           MOVE SUPPLIER-NAME-IN           TO SUPPLIER-NAME-OUT
+
+           ADD 1 TO TOTAL-RECORDS-WS
+           ADD AMOUNT-IN TO TOTAL-DOLLARS-WS
+
+           MOVE DETAILED-OUTPUT-LINE-SETUP TO PRINT-A-SINGLE-LINE
+           WRITE PRINT-A-SINGLE-LINE AFTER ADVANCING 1 LINE
+
+           PERFORM 250-READ-ONE-RECORD.
+
+       900-CLOSE.
+           MOVE  TOTAL-RECORDS-WS          TO TOTAL-RECORDS-OUT
+           MOVE  TOTAL-DOLLARS-WS          TO TOTAL-DOLLARS-OUT
+
+           MOVE  TOTAL-RECORDS-LINE-SETUP  TO PRINT-A-SINGLE-LINE
+           WRITE PRINT-A-SINGLE-LINE AFTER 3 LINES
+
+           MOVE  TOTAL-DOLLARS-LINE-SETUP  TO PRINT-A-SINGLE-LINE
+           WRITE PRINT-A-SINGLE-LINE AFTER 1 LINE
+
+           CLOSE  INVENTORY-INPUT-FILE  INVENTORY-OUTPUT-FILE.
